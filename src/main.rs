@@ -1,11 +1,13 @@
 use mooduck_quacklib::{Audio, Emotion, MICRODUCK_SEED, Options, Synthesizer};
 use std::{env, error::Error, path::PathBuf};
 
+mod playback;
+
 const HELP: &str = "mooduck_quacklib — expressive Microduck-inspired sounds
 
 Usage:
   mooduck_quacklib list
-  mooduck_quacklib play <emotion> [options]                 Play on macOS with afplay
+  mooduck_quacklib play <emotion> [options]                 Play on macOS or Linux
   mooduck_quacklib render <emotion> --output <file.wav> [options]
   mooduck_quacklib demo [--output-dir <directory>] [options] Export all emotions
 
@@ -20,7 +22,9 @@ Options:
   -h, --help             Show help
 
 English and German emotion names are accepted, e.g. happy / freude.
-Intensity zero is subdued; volume zero is silent. No audio dependencies needed.
+Intensity zero is subdued; volume zero is silent.
+Playback: macOS uses afplay; Linux tries pw-play, paplay, then aplay from PATH.
+No external Rust dependencies; Linux playback requires one of these players.
 ";
 
 struct Args {
@@ -108,53 +112,6 @@ fn save(audio: &Audio, path: &std::path::Path) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-#[cfg(target_os = "macos")]
-fn play(audio: &Audio, output: Option<PathBuf>) -> Result<(), Box<dyn Error>> {
-    // A private temp directory avoids collisions and is removed even if afplay fails.
-    struct TemporaryDirectory(PathBuf);
-    impl Drop for TemporaryDirectory {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.0);
-        }
-    }
-    let mut temporary = None;
-    let path = match output {
-        Some(path) => {
-            save(audio, &path)?;
-            path
-        }
-        None => {
-            use std::os::unix::fs::DirBuilderExt;
-            let stamp = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)?
-                .as_nanos();
-            let dir =
-                env::temp_dir().join(format!("mooduck_quacklib-{}-{stamp}", std::process::id()));
-            std::fs::DirBuilder::new().mode(0o700).create(&dir)?;
-            temporary = Some(TemporaryDirectory(dir.clone()));
-            let path = dir.join("voice.wav");
-            audio.save_wav(&path)?;
-            path
-        }
-    };
-    let status = std::process::Command::new("/usr/bin/afplay")
-        .arg(&path)
-        .status()?;
-    drop(temporary);
-    if !status.success() {
-        return Err(format!("afplay failed ({status}); try render --output voice.wav").into());
-    }
-    Ok(())
-}
-
-#[cfg(not(target_os = "macos"))]
-fn play(_audio: &Audio, _output: Option<PathBuf>) -> Result<(), Box<dyn Error>> {
-    Err(
-        "direct playback currently supports macOS; use render --output voice.wav or the PCM API"
-            .into(),
-    )
-}
-
 fn run() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().skip(1).collect();
     if args.is_empty() || args.iter().any(|a| a == "--help" || a == "-h") {
@@ -194,7 +151,7 @@ fn run() -> Result<(), Box<dyn Error>> {
                 "{emotion}: intensity {}, volume {}",
                 args.options.intensity, args.options.volume
             );
-            play(&audio, args.output)?;
+            playback::play(&audio, args.output)?;
         } else {
             save(&audio, &args.output.unwrap())?;
         }

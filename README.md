@@ -2,10 +2,10 @@
 
 A small Rust crate for expressive, synthetic duck sounds inspired by Microduck.
 Runs entirely offline, with no external Rust dependencies, bundled audio files,
-or AI model. Includes a CLI for listening on a Mac and a cross-platform PCM
+or AI model. Includes a CLI for listening on macOS and Linux and a cross-platform PCM
 interface for use on a robot.
 
-## Try it on a Mac
+## Try it on macOS or Linux
 
 Requires Rust 1.85 or later. From the project directory:
 
@@ -15,9 +15,24 @@ cargo run --release -- play curious --intensity 0.9
 cargo run --release -- play sad --intensity 1.0 --volume 0.4
 ```
 
-`play` uses `/usr/bin/afplay`, which ships with macOS, and removes the temporary
-WAV file afterward. To keep the file, add `--output audio/curious.wav`.
-No GUI or additional audio driver is required.
+On macOS, `play` uses `/usr/bin/afplay`, which ships with the operating system.
+On Linux, it tries these players from `PATH` in order, moving to the next if a
+player is missing or fails:
+
+| Player | Audio system | Debian/Ubuntu package |
+| --- | --- | --- |
+| `pw-play` | PipeWire | `pipewire-bin` |
+| `paplay` | PulseAudio | `pulseaudio-utils` |
+| `aplay` | ALSA | `alsa-utils` |
+
+Install a player appropriate for your existing audio setup. For example, on
+Debian or Ubuntu, `sudo apt install alsa-utils` provides `aplay`. An accessible
+audio device or a running audio server is required; SSH sessions and containers
+may need audio access configured separately.
+
+Playback removes its temporary WAV file afterward, including on failure.
+To keep the file, add `--output audio/curious.wav`; this file is preserved even
+if playback fails. No GUI or external Rust dependencies are required.
 
 Optionally, install the CLI locally:
 
@@ -37,12 +52,14 @@ cargo run --release --example compare
 
 `demo` exports all ten emotions. `compare` renders happiness, curiosity, and
 sadness at intensities of 0.2, 0.6, and 1.0 into `audio/comparison/`.
-For example, compare:
+For example, compare on macOS:
 
 ```sh
 afplay audio/comparison/curious-0.2.wav
 afplay audio/comparison/curious-1.0.wav
 ```
+
+On Linux, use your installed player (for example, replace `afplay` with `aplay`).
 
 ## Expression and voice
 
@@ -126,7 +143,7 @@ Synthesis computes and allocates a complete short clip. Run it in a worker or
 during preparation, outside the time-critical audio callback or control loop.
 Frequently used sounds can be rendered in advance. Integration with the HULKs
 audio stack is not included yet, and the robot hardware has not been tested.
-Direct CLI playback currently supports macOS; WAV export and the library are
+Direct CLI playback supports macOS and Linux; WAV export and the library are
 cross-platform.
 
 ## Relationship to Microduck
@@ -157,3 +174,5 @@ cargo fmt --check
 Tests check voice parameters against the Python reference, output bounds and
 silence at clip endings, all emotions at multiple sample rates, volume and
 intensity, reproducible variants, invalid parameters, and encoded WAV samples.
+Playback tests use stand-in executables to check player fallback, error messages,
+file paths with spaces, and temporary-file cleanup without needing audio hardware.
