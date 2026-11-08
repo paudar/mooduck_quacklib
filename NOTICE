@@ -1,0 +1,16 @@
+mooduck_quacklib
+
+The seeded voice personality, harmonic weights, and synthesis approach in
+src/voice.rs and src/rng.rs are adapted to Rust from tools/quack.py in:
+https://huggingface.co/datasets/pollen-robotics/microduck-emotions
+Published by Pollen Robotics under Apache-2.0.
+The dataset credits Rémi Fabre, September 2026.
+
+Source reference retrieved November 8, 2026:
+https://huggingface.co/datasets/pollen-robotics/microduck-emotions/raw/main/tools/quack.py
+
+Changes: standalone Rust implementation without dependencies, a different
+per-sample noise generator, sample-rate-aware harmonic filtering and envelopes,
+new emotion recipes with intensity control, PCM/WAV output, and a CLI.
+mooduck_quacklib is an independent project; it does not claim affiliation or bit-identical
+audio with Microduck. No recordings or trained models are bundled.

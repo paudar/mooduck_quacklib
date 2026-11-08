@@ -1,0 +1,17 @@
+[package]
+name = "mooduck_quacklib"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Small, expressive Microduck-inspired procedural voices"
+license = "Apache-2.0"
+readme = "README.md"
+keywords = ["audio", "synthesis", "robotics", "duck", "dsp"]
+categories = ["multimedia::audio"]
+include = ["src/**", "tests/**", "examples/**", "README.md", "LICENSE", "NOTICE", "Cargo.lock"]
+
+[dependencies]
+
+[profile.release]
+lto = true
+codegen-units = 1
