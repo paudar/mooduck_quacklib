@@ -156,6 +156,41 @@ fn curiosity_duration_grows_smoothly_when_the_second_call_emerges() {
 }
 
 #[test]
+fn subdued_sadness_has_moderate_length_and_grows_into_a_full_sigh() {
+    for seed in [mooduck_quacklib::MICRODUCK_SEED, 0, 12, u32::MAX] {
+        let synth = Synthesizer::new(seed);
+        for variant in [0, 1, 7] {
+            let mut previous = 0.0;
+            for intensity in [0.0, 0.1, 0.2, 0.5, 1.0] {
+                let audio = synth
+                    .render(
+                        Emotion::Sad,
+                        Options {
+                            intensity,
+                            variant,
+                            ..Options::default()
+                        },
+                    )
+                    .unwrap();
+                let duration = audio.duration_seconds();
+                assert!(duration > previous);
+                if intensity <= 0.2 {
+                    assert!(
+                        (0.45..0.9).contains(&duration),
+                        "seed {seed}, variant {variant}: {duration}"
+                    );
+                }
+                if intensity == 1.0 {
+                    assert!(duration > 1.8);
+                }
+                assert!(audio.samples().iter().rev().take(100).all(|s| *s == 0.0));
+                previous = duration;
+            }
+        }
+    }
+}
+
+#[test]
 fn rendered_pitch_rises_for_curiosity_and_falls_for_sadness() {
     // Measure actual PCM via normalized autocorrelation, independently of the recipe.
     fn fundamental(samples: &[f32], start_seconds: f64) -> f64 {

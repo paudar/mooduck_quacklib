@@ -123,8 +123,12 @@ pub(crate) fn recipe(emotion: Emotion, intensity: f64, speed: f64, pitch: f64) -
     };
     // Scale the phrase length instead of slowing subdued expressions down.
     // Preserve the original full-strength timing, including the slower sad coo.
-    let duration_scale =
-        (0.35 + 0.65 * intensity) / (if emotion == Sad { 1.0 } else { 1.2 } * speed);
+    let duration_scale = if emotion == Sad {
+        // A subdued coo should be brief; reserve the long sigh for high intensity.
+        (0.22 + 0.78 * intensity * intensity) / speed
+    } else {
+        (0.35 + 0.65 * intensity) / (1.2 * speed)
+    };
     for call in &mut calls {
         call.start *= duration_scale;
         call.duration *= duration_scale;

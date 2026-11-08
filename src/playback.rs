@@ -26,14 +26,24 @@ struct TemporaryDirectory(PathBuf);
 impl TemporaryDirectory {
     fn new() -> std::io::Result<Self> {
         use std::os::unix::fs::DirBuilderExt;
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static NEXT: AtomicU64 = AtomicU64::new(0);
         let stamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_err(std::io::Error::other)?
             .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("mooduck_quacklib-{}-{stamp}", std::process::id()));
-        std::fs::DirBuilder::new().mode(0o700).create(&path)?;
-        Ok(Self(path))
+        loop {
+            let sequence = NEXT.fetch_add(1, Ordering::Relaxed);
+            let path = std::env::temp_dir().join(format!(
+                "mooduck_quacklib-{}-{stamp}-{sequence}",
+                std::process::id()
+            ));
+            match std::fs::DirBuilder::new().mode(0o700).create(&path) {
+                Ok(()) => return Ok(Self(path)),
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(error) => return Err(error),
+            }
+        }
     }
 }
 

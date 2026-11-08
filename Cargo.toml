@@ -12,6 +12,11 @@ include = ["src/**", "tests/**", "examples/**", "README.md", "LICENSE", "NOTICE"
 
 [dependencies]
 
+[workspace]
+members = ["apps/listener"]
+default-members = ["."]
+resolver = "3"
+
 [profile.release]
 lto = true
 codegen-units = 1

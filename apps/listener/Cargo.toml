@@ -1,0 +1,21 @@
+[package]
+name = "mooduck_listener"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+license = "Apache-2.0"
+description = "Local, RAM-only voice expression listener for mooduck_quacklib"
+
+[dependencies]
+mooduck_quacklib = { path = "../.." }
+anyhow = "1"
+candle-core = "=0.9.2"
+candle-nn = "=0.9.2"
+clap = { version = "=4.5.54", features = ["derive"] }
+cpal = "0.16"
+ctrlc = "3.5"
+rtrb = "0.3"
+sha2 = "0.10"
+ureq = { version = "=3.1.4", default-features = false, features = ["rustls"] }
+webrtc-vad = "0.4"

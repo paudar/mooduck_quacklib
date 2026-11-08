@@ -77,7 +77,8 @@ lengthens the expression and raises its level; happiness, anger, excitement, and
 laughter also gain repetitions. Curiosity consists of one call at intensities
 up to and including 0.5; above that, a second call gradually emerges. With the
 default voice, curiosity lasts about 0.25 seconds at 0.2 and 1.25 seconds at 1.0.
-Sadness ranges from a short coo to a long sigh.
+Sadness ranges from a moderate coo (about 0.7 seconds at intensity 0.2 with
+the default voice) to the original long sigh at full intensity.
 `intensity = 0` produces a subdued expression; `volume = 0` produces silence.
 The peak level never exceeds −3 dBFS, even with both controls set to 1.
 WAV export preserves the configured output level.
@@ -98,6 +99,13 @@ English emotion names and the following German aliases are accepted:
 | `confused` | `verwirrt`, `mmh` | A muffled, rising “mmh?” |
 
 ## Use it in Rust
+
+To react automatically to speaking pauses using a local vocal-expression model,
+see the separate [mooduck_listener app](apps/listener/README.md). It supports macOS
+and Linux, requires Rust 1.88 or later, keeps microphone audio in bounded RAM
+buffers, and offers `listen`, `support`, and `mirror` response modes (`mirror` is
+the default). Its audio and model dependencies are isolated from this sound crate. The root package remains the default workspace
+member, so the existing sound CLI commands below continue to work.
 
 Add the crate as a local dependency in your application:
 
